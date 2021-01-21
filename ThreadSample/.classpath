@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/acmapi.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/Jace.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/JSON4J_Apache.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/poi-3.9.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/poi-ooxml-3.9.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/poi-ooxml-schemas-3.9.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Desktop/DocHandler/xmlbeans-3.1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Downloads/JARS/pe.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Downloads/JARS/pe3pt.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Downloads/JARS/stax-api.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Downloads/JARS/xlxpScanner.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrator/Downloads/JARS/xlxpScannerUtils.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
