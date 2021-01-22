@@ -19,14 +19,11 @@ import com.ibm.casemgmt.api.objectref.ObjectStoreReference;
 
 public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Object>>> {
 	HashMap<Integer, HashMap<String, Object>> caseProperties;
-	ObjectStore objectStore;
 	String casetypeName;
 
-	public ThreadClass(HashMap<Integer, HashMap<String, Object>> caseProperties, ObjectStore objectStore,
-			String casetypeName) {
+	public ThreadClass(HashMap<Integer, HashMap<String, Object>> caseProperties, String casetypeName) {
 		super();
 		this.caseProperties = caseProperties;
-		this.objectStore = objectStore;
 		this.casetypeName = casetypeName;
 	}
 
@@ -45,18 +42,23 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 		CaseMgmtContext cmc = new CaseMgmtContext(vwSessCache, new SimpleP8ConnectionCache());
 		oldCmc = CaseMgmtContext.set(cmc);
 		Iterator<Entry<Integer, HashMap<String, Object>>> caseProperty = caseProperties.entrySet().iterator();
+		int caseCount = 0;
 		while (caseProperty.hasNext()) {
+			String caseId = "";
+			int rowNumber = 1;
+			HashMap<String, Object> rowValue = new HashMap<String, Object>();
 			try {
 				Case pendingCase = null;
-				String caseId = "";
 				Entry<Integer, HashMap<String, Object>> propertyPair = caseProperty.next();
-				System.out.println("RowNumber :   " + propertyPair.getKey());
+				rowNumber = propertyPair.getKey();
+				System.out.println("RowNumber :   " + rowNumber);
 				ObjectStoreReference targetOsRef = new ObjectStoreReference(targetOS);
 				CaseType caseType = CaseType.fetchInstance(targetOsRef, casetypeName);
 				pendingCase = Case.createPendingInstance(caseType);
 				Iterator<Entry<String, Object>> propertyValues = (propertyPair.getValue()).entrySet().iterator();
 				while (propertyValues.hasNext()) {
 					Entry<String, Object> propertyValuesPair = propertyValues.next();
+					rowValue.put(propertyValuesPair.getKey(), propertyValuesPair.getValue());
 					pendingCase.getProperties().putObjectValue(propertyValuesPair.getKey(),
 							propertyValuesPair.getValue());
 					propertyValues.remove();
@@ -68,7 +70,16 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 				System.out.println(e);
 				e.printStackTrace();
 			}
+			if (!caseId.isEmpty()) {
+				caseCount += 1;
+				System.out.println("CaseCount: " + caseCount);
+				rowValue.put("Status", "Success");
+				caseProperties.put(rowNumber, rowValue);
+			} else {
+				rowValue.put("Status", "Failure");
+				caseProperties.put(rowNumber, rowValue);
+			}
 		}
-		return null;
+		return caseProperties;
 	}
 }
