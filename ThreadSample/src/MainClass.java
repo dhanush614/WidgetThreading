@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -52,12 +51,12 @@ public class MainClass {
 	static UserContext old = null;
 	static CaseMgmtContext oldCmc = null;
 	static String TOS = "tos";
-
+	static Connection conn = null;
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		try {
 			ConnectionClass connectionClass = new ConnectionClass();
-			Connection conn = connectionClass.getConnection();
+			conn = connectionClass.getConnection();
 			Domain domain = Factory.Domain.fetchInstance(conn, null, null);
 			System.out.println("Domain: " + domain.get_Name());
 			System.out.println("Connection to Content Platform Engine successful");
@@ -66,9 +65,6 @@ public class MainClass {
 			SimpleVWSessionCache vwSessCache = new SimpleVWSessionCache();
 			CaseMgmtContext cmc = new CaseMgmtContext(vwSessCache, new SimpleP8ConnectionCache());
 			oldCmc = CaseMgmtContext.set(cmc);
-
-			ExecutorService threadExecutor = Executors.newFixedThreadPool(1);
-			List<Future<HashMap<Integer, HashMap<String, Object>>>> responseList = new ArrayList<Future<HashMap<Integer, HashMap<String, Object>>>>();
 
 			PropertyFilter pf = new PropertyFilter();
 			pf.addIncludeProperty(new FilterElement(null, null, null, PropertyNames.CONTENT_SIZE, null));
@@ -86,6 +82,7 @@ public class MainClass {
 				String docCheckInDate = formatter.format(doc.get_DateCheckedIn());
 				String todayDate = formatter.format(new Date());
 				XSSFWorkbook workbook = null;
+				HashMap<Integer, HashMap<String, Object>> responseData = null;
 				if (docCheckInDate.equals(todayDate)) {
 					HashMap<Integer, HashMap<String, Object>> excelRows = null;
 					ContentElementList docContentList = doc.get_ContentElements();
@@ -96,14 +93,11 @@ public class MainClass {
 					}
 					workbook = new XSSFWorkbook(stream);
 					excelRows = readExcelRows(targetOS, workbook);
-					Future<HashMap<Integer, HashMap<String, Object>>> threadList = threadExecutor
-							.submit(new ThreadClass(excelRows, docTitle));
-					responseList.add(threadList);
-					threadExecutor.shutdown();
+					responseData = threadExecMethod(excelRows, docTitle);
 				} else {
 					System.out.println("No Templates Available, Please upload template and try again..!!");
 				}
-				updateDocument(responseList, targetOS, doc, workbook, stream);
+				updateDocument(responseData, targetOS, doc, workbook, stream);
 			}
 
 		} catch (Exception e) {
@@ -118,6 +112,38 @@ public class MainClass {
 			}
 		}
 
+	}
+
+	public static HashMap<Integer, HashMap<String, Object>> threadExecMethod(
+			HashMap<Integer, HashMap<String, Object>> excelRows, String docTitle) {
+		HashMap<Integer, HashMap<String, Object>> responseMap = new HashMap<Integer, HashMap<String, Object>>();
+		ExecutorService threadExecutor = Executors.newFixedThreadPool(10);
+		List<Future<HashMap<Integer, HashMap<String, Object>>>> responseList = new ArrayList<Future<HashMap<Integer, HashMap<String, Object>>>>();
+		Iterator<Entry<Integer, HashMap<String, Object>>> excelRow = excelRows.entrySet().iterator();
+		while (excelRow.hasNext()) {
+			try {
+				Entry<Integer, HashMap<String, Object>> propertyPair = excelRow.next();
+				Future<HashMap<Integer, HashMap<String, Object>>> threadList = threadExecutor
+						.submit(new ThreadClass(propertyPair.getKey(), propertyPair.getValue(), docTitle));
+				responseList.add(threadList);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		for (Future<HashMap<Integer, HashMap<String, Object>>> object : responseList) {
+			try {
+				HashMap<Integer, HashMap<String, Object>> map = object.get();
+				Iterator<Entry<Integer, HashMap<String, Object>>> caseProperty = map.entrySet().iterator();
+				while (caseProperty.hasNext()) {
+					Entry<Integer, HashMap<String, Object>> propertyPair = caseProperty.next();
+					responseMap.put(propertyPair.getKey(), propertyPair.getValue());
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		threadExecutor.shutdown();
+		return responseMap;
 	}
 
 	public static HashMap<Integer, HashMap<String, Object>> readExcelRows(ObjectStore targetOS, XSSFWorkbook workbook)
@@ -212,34 +238,32 @@ public class MainClass {
 		return caseProperties;
 	}
 
-	public static void updateDocument(List<Future<HashMap<Integer, HashMap<String, Object>>>> responseList,
-			ObjectStore os, Document doc, XSSFWorkbook workbook, InputStream stream) throws IOException {
+	public static void updateDocument(HashMap<Integer, HashMap<String, Object>> responseMap, ObjectStore os,
+			Document doc, XSSFWorkbook workbook, InputStream stream) throws IOException {
 		// TODO Auto-generated method stub
 		XSSFSheet sheet = workbook.getSheetAt(0);
 		int lastCellNum = sheet.getRow(0).getLastCellNum();
 		int rowNum1 = 1;
-		for (Future<HashMap<Integer, HashMap<String, Object>>> object : responseList) {
+		Iterator<Entry<Integer, HashMap<String, Object>>> caseProperty = responseMap.entrySet().iterator();
+		while (caseProperty.hasNext()) {
 			try {
-				HashMap<Integer, HashMap<String, Object>> map = object.get();
-				Iterator<Entry<Integer, HashMap<String, Object>>> caseProperty = map.entrySet().iterator();
-				while (caseProperty.hasNext()) {
-					Entry<Integer, HashMap<String, Object>> propertyPair = caseProperty.next();
-					Iterator<Entry<String, Object>> propertyValues = (propertyPair.getValue()).entrySet().iterator();
-					while (propertyValues.hasNext()) {
-						Entry<String, Object> propertyValuesPair = propertyValues.next();
-						Row row = sheet.getRow(rowNum1);
-						Cell cell1 = row.createCell(lastCellNum - 1);
-						if (propertyValuesPair.getKey() == "Status") {
-							cell1.setCellValue(propertyValuesPair.getValue().toString());
-						}
-						rowNum1++;
+				Entry<Integer, HashMap<String, Object>> propertyPair = caseProperty.next();
+				Iterator<Entry<String, Object>> propertyValues = (propertyPair.getValue()).entrySet().iterator();
+				while (propertyValues.hasNext()) {
+					Entry<String, Object> propertyValuesPair = propertyValues.next();
+					Row row = sheet.getRow(rowNum1);
+					Cell cell1 = row.createCell(lastCellNum - 1);
+					if (propertyValuesPair.getKey() == "Status") {
+						cell1.setCellValue(propertyValuesPair.getValue().toString());
 					}
-					propertyValues.remove();
+					rowNum1++;
 				}
+				propertyValues.remove();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+
 		InputStream is = null;
 		ByteArrayOutputStream bos = null;
 		try {

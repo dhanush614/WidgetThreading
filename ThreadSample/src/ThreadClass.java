@@ -18,12 +18,14 @@ import com.ibm.casemgmt.api.context.SimpleVWSessionCache;
 import com.ibm.casemgmt.api.objectref.ObjectStoreReference;
 
 public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Object>>> {
-	HashMap<Integer, HashMap<String, Object>> caseProperties;
+	HashMap<String, Object> caseProperties;
+	int rowNumber;
 	String casetypeName;
 
-	public ThreadClass(HashMap<Integer, HashMap<String, Object>> caseProperties, String casetypeName) {
+	public ThreadClass(int rowNumber, HashMap<String, Object> hashMap, String casetypeName) {
 		super();
-		this.caseProperties = caseProperties;
+		this.rowNumber = rowNumber;
+		this.caseProperties = hashMap;
 		this.casetypeName = casetypeName;
 	}
 
@@ -34,6 +36,7 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 		ConnectionClass connectionClass = new ConnectionClass();
 		Connection conn = connectionClass.getConnection();
 		Domain domain = Factory.Domain.fetchInstance(conn, null, null);
+		HashMap<Integer, HashMap<String, Object>> responseMap = new HashMap<Integer, HashMap<String, Object>>();
 		System.out.println("Domain: " + domain.get_Name());
 		System.out.println("Connection to Content Platform Engine successful");
 		ObjectStore targetOS = (ObjectStore) domain.fetchObject(ClassNames.OBJECT_STORE, "tos", null);
@@ -41,45 +44,38 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 		SimpleVWSessionCache vwSessCache = new SimpleVWSessionCache();
 		CaseMgmtContext cmc = new CaseMgmtContext(vwSessCache, new SimpleP8ConnectionCache());
 		oldCmc = CaseMgmtContext.set(cmc);
-		Iterator<Entry<Integer, HashMap<String, Object>>> caseProperty = caseProperties.entrySet().iterator();
 		int caseCount = 0;
-		while (caseProperty.hasNext()) {
-			String caseId = "";
-			int rowNumber = 1;
-			HashMap<String, Object> rowValue = new HashMap<String, Object>();
-			try {
-				Case pendingCase = null;
-				Entry<Integer, HashMap<String, Object>> propertyPair = caseProperty.next();
-				rowNumber = propertyPair.getKey();
-				System.out.println("RowNumber :   " + rowNumber);
-				ObjectStoreReference targetOsRef = new ObjectStoreReference(targetOS);
-				CaseType caseType = CaseType.fetchInstance(targetOsRef, casetypeName);
-				pendingCase = Case.createPendingInstance(caseType);
-				Iterator<Entry<String, Object>> propertyValues = (propertyPair.getValue()).entrySet().iterator();
-				while (propertyValues.hasNext()) {
-					Entry<String, Object> propertyValuesPair = propertyValues.next();
-					rowValue.put(propertyValuesPair.getKey(), propertyValuesPair.getValue());
-					pendingCase.getProperties().putObjectValue(propertyValuesPair.getKey(),
-							propertyValuesPair.getValue());
-					propertyValues.remove();
-				}
-				pendingCase.save(RefreshMode.REFRESH, null, ModificationIntent.MODIFY);
-				caseId = pendingCase.getId().toString();
-				System.out.println("Case_ID: " + caseId);
-			} catch (Exception e) {
-				System.out.println(e);
-				e.printStackTrace();
+		String caseId = "";
+		HashMap<String, Object> rowValue = new HashMap<String, Object>();
+		try {
+			Case pendingCase = null;
+			System.out.println("RowNumber :   " + rowNumber);
+			ObjectStoreReference targetOsRef = new ObjectStoreReference(targetOS);
+			CaseType caseType = CaseType.fetchInstance(targetOsRef, casetypeName);
+			pendingCase = Case.createPendingInstance(caseType);
+			Iterator<Entry<String, Object>> propertyValues = caseProperties.entrySet().iterator();
+			while (propertyValues.hasNext()) {
+				Entry<String, Object> propertyValuesPair = propertyValues.next();
+				rowValue.put(propertyValuesPair.getKey(), propertyValuesPair.getValue());
+				pendingCase.getProperties().putObjectValue(propertyValuesPair.getKey(), propertyValuesPair.getValue());
+				propertyValues.remove();
 			}
-			if (!caseId.isEmpty()) {
-				caseCount += 1;
-				System.out.println("CaseCount: " + caseCount);
-				rowValue.put("Status", "Success");
-				caseProperties.put(rowNumber, rowValue);
-			} else {
-				rowValue.put("Status", "Failure");
-				caseProperties.put(rowNumber, rowValue);
-			}
+			pendingCase.save(RefreshMode.REFRESH, null, ModificationIntent.MODIFY);
+			caseId = pendingCase.getId().toString();
+			System.out.println("Case_ID: " + caseId);
+		} catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
 		}
-		return caseProperties;
+		if (!caseId.isEmpty()) {
+			caseCount += 1;
+			System.out.println("CaseCount: " + caseCount);
+			rowValue.put("Status", "Success");
+			responseMap.put(rowNumber, rowValue);
+		} else {
+			rowValue.put("Status", "Failure");
+			responseMap.put(rowNumber, rowValue);
+		}
+		return responseMap;
 	}
 }
