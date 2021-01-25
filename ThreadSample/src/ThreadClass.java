@@ -44,7 +44,6 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 		SimpleVWSessionCache vwSessCache = new SimpleVWSessionCache();
 		CaseMgmtContext cmc = new CaseMgmtContext(vwSessCache, new SimpleP8ConnectionCache());
 		oldCmc = CaseMgmtContext.set(cmc);
-		int caseCount = 0;
 		String caseId = "";
 		HashMap<String, Object> rowValue = new HashMap<String, Object>();
 		try {
@@ -68,8 +67,6 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 			e.printStackTrace();
 		}
 		if (!caseId.isEmpty()) {
-			caseCount += 1;
-			System.out.println("CaseCount: " + caseCount);
 			rowValue.put("Status", "Success");
 			responseMap.put(rowNumber, rowValue);
 		} else {

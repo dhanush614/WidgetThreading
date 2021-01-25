@@ -55,6 +55,7 @@ public class MainClass {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		System.out.println("Start Time: "+java.time.LocalTime.now());
 		try {
 			ConnectionClass connectionClass = new ConnectionClass();
 			conn = connectionClass.getConnection();
@@ -112,7 +113,7 @@ public class MainClass {
 				UserContext.set(old);
 			}
 		}
-
+		System.out.println("End Time: "+java.time.LocalTime.now());
 	}
 
 	public static HashMap<Integer, HashMap<String, Object>> threadExecMethod(
@@ -201,7 +202,7 @@ public class MainClass {
 		}
 		int rowStart = sheet.getFirstRowNum() + 1;
 		int rowEnd = sheet.getLastRowNum();
-		for (int rowNumber = rowStart; rowNumber < rowEnd; rowNumber++) {
+		for (int rowNumber = rowStart; rowNumber <= rowEnd; rowNumber++) {
 			Row row = sheet.getRow(rowNumber);
 			if (row == null) {
 				break;
