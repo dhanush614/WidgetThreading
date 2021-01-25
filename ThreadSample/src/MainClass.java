@@ -52,6 +52,7 @@ public class MainClass {
 	static CaseMgmtContext oldCmc = null;
 	static String TOS = "tos";
 	static Connection conn = null;
+
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		try {
@@ -94,10 +95,10 @@ public class MainClass {
 					workbook = new XSSFWorkbook(stream);
 					excelRows = readExcelRows(targetOS, workbook);
 					responseData = threadExecMethod(excelRows, docTitle);
+					updateDocument(responseData, targetOS, doc, workbook, stream);
 				} else {
 					System.out.println("No Templates Available, Please upload template and try again..!!");
 				}
-				updateDocument(responseData, targetOS, doc, workbook, stream);
 			}
 
 		} catch (Exception e) {
@@ -243,22 +244,22 @@ public class MainClass {
 		// TODO Auto-generated method stub
 		XSSFSheet sheet = workbook.getSheetAt(0);
 		int lastCellNum = sheet.getRow(0).getLastCellNum();
-		int rowNum1 = 1;
+		int rowNum;
+		boolean response = false;
 		Iterator<Entry<Integer, HashMap<String, Object>>> caseProperty = responseMap.entrySet().iterator();
 		while (caseProperty.hasNext()) {
 			try {
 				Entry<Integer, HashMap<String, Object>> propertyPair = caseProperty.next();
-				Iterator<Entry<String, Object>> propertyValues = (propertyPair.getValue()).entrySet().iterator();
-				while (propertyValues.hasNext()) {
-					Entry<String, Object> propertyValuesPair = propertyValues.next();
-					Row row = sheet.getRow(rowNum1);
-					Cell cell1 = row.createCell(lastCellNum - 1);
-					if (propertyValuesPair.getKey() == "Status") {
-						cell1.setCellValue(propertyValuesPair.getValue().toString());
-					}
-					rowNum1++;
+				rowNum = propertyPair.getKey();
+				Row row = sheet.getRow(rowNum);
+				Cell cell = row.createCell(lastCellNum - 1);
+				HashMap<String, Object> propertyValues = (propertyPair.getValue());
+				String status = propertyValues.get("Status").toString();
+				if (status == "Success") {
+					cell.setCellValue("Success");
+				} else {
+					cell.setCellValue("Failure");
 				}
-				propertyValues.remove();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
