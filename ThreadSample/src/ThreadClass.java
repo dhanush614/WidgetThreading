@@ -37,10 +37,11 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 		Connection conn = connectionClass.getConnection();
 		Domain domain = Factory.Domain.fetchInstance(conn, null, null);
 		HashMap<Integer, HashMap<String, Object>> responseMap = new HashMap<Integer, HashMap<String, Object>>();
-		//System.out.println("Domain: " + domain.get_Name());
-		//System.out.println("Connection to Content Platform Engine successful");
+		// System.out.println("Domain: " + domain.get_Name());
+		// System.out.println("Connection to Content Platform Engine
+		// successful");
 		ObjectStore targetOS = (ObjectStore) domain.fetchObject(ClassNames.OBJECT_STORE, "tos", null);
-		//System.out.println("Object Store =" + targetOS.get_DisplayName());
+		// System.out.println("Object Store =" + targetOS.get_DisplayName());
 		SimpleVWSessionCache vwSessCache = new SimpleVWSessionCache();
 		CaseMgmtContext cmc = new CaseMgmtContext(vwSessCache, new SimpleP8ConnectionCache());
 		oldCmc = CaseMgmtContext.set(cmc);
@@ -48,7 +49,8 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 		HashMap<String, Object> rowValue = new HashMap<String, Object>();
 		try {
 			Case pendingCase = null;
-			//System.out.println("RowNumber :   " + rowNumber);
+			// System.out.println("RowNumber : " + rowNumber);
+			System.out.println("Id: " + Thread.currentThread().getId() + "RowNumber :   " + rowNumber);
 			ObjectStoreReference targetOsRef = new ObjectStoreReference(targetOS);
 			CaseType caseType = CaseType.fetchInstance(targetOsRef, casetypeName);
 			pendingCase = Case.createPendingInstance(caseType);
@@ -61,7 +63,7 @@ public class ThreadClass implements Callable<HashMap<Integer, HashMap<String, Ob
 			}
 			pendingCase.save(RefreshMode.REFRESH, null, ModificationIntent.MODIFY);
 			caseId = pendingCase.getId().toString();
-			//System.out.println("Case_ID: " + caseId);
+			System.out.println("ID: " + Thread.currentThread().getId() + "Case_ID: " + caseId);
 		} catch (Exception e) {
 			System.out.println(e);
 			e.printStackTrace();

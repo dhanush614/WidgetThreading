@@ -55,15 +55,17 @@ public class MainClass {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		System.out.println("Start Time: "+java.time.LocalTime.now());
+		System.out.println("Start Time: " + java.time.LocalTime.now());
 		try {
 			ConnectionClass connectionClass = new ConnectionClass();
 			conn = connectionClass.getConnection();
 			Domain domain = Factory.Domain.fetchInstance(conn, null, null);
-			//System.out.println("Domain: " + domain.get_Name());
-			//System.out.println("Connection to Content Platform Engine successful");
+			// System.out.println("Domain: " + domain.get_Name());
+			// System.out.println("Connection to Content Platform Engine
+			// successful");
 			ObjectStore targetOS = (ObjectStore) domain.fetchObject(ClassNames.OBJECT_STORE, TOS, null);
-			//System.out.println("Object Store =" + targetOS.get_DisplayName());
+			// System.out.println("Object Store =" +
+			// targetOS.get_DisplayName());
 			SimpleVWSessionCache vwSessCache = new SimpleVWSessionCache();
 			CaseMgmtContext cmc = new CaseMgmtContext(vwSessCache, new SimpleP8ConnectionCache());
 			oldCmc = CaseMgmtContext.set(cmc);
@@ -113,13 +115,13 @@ public class MainClass {
 				UserContext.set(old);
 			}
 		}
-		System.out.println("End Time: "+java.time.LocalTime.now());
+		System.out.println("End Time: " + java.time.LocalTime.now());
 	}
 
 	public static HashMap<Integer, HashMap<String, Object>> threadExecMethod(
 			HashMap<Integer, HashMap<String, Object>> excelRows, String docTitle) {
 		HashMap<Integer, HashMap<String, Object>> responseMap = new HashMap<Integer, HashMap<String, Object>>();
-		ExecutorService threadExecutor = Executors.newFixedThreadPool(5);
+		ExecutorService threadExecutor = Executors.newFixedThreadPool(20);
 		List<Future<HashMap<Integer, HashMap<String, Object>>>> responseList = new ArrayList<Future<HashMap<Integer, HashMap<String, Object>>>>();
 		Iterator<Entry<Integer, HashMap<String, Object>>> excelRow = excelRows.entrySet().iterator();
 		while (excelRow.hasNext()) {
